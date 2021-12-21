@@ -15,9 +15,9 @@ class TOC extends Component { //'TOC컴포넌트'
                             e.preventDefault();
                             this.props.onChangePage(e.target.dataset.id); //*onChangePage이벤트의 function의 인자로, 클릭한 목록의 id값을 전달!
                         }.bind(this)}>{data[i].title}</a>
-                </li>); //<a>태그에, 목록을 클릭했을 때
+                </li>); //목록을 클릭했을 때
             i=i+1;
-        } //반복문 사용
+        } 
 
         return ( 
             <nav>
