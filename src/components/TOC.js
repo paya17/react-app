@@ -1,6 +1,13 @@
 import React, { Component } from 'react'; 
 
 class TOC extends Component { //'TOC컴포넌트'
+    shouldComponentUpdate(newProps, newState) {
+        if(this.props.data === newProps.data) { //concat()이 아닌 push()를 사용했다면, 둘이 똑같았을 것
+            return false;
+        }
+        return true;
+    } //*shouldComponentUpdate()를 이용해, TOC컴포넌트로 들어오는 props값이 바뀌면 render함수가 호출되고, 값이 안바뀌면 render함수가 호출되지 않도록
+
     render() {
         var lists = []; 
         var data = this.props.data; 
