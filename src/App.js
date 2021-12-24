@@ -15,7 +15,7 @@ class App extends Component { //'App컴포넌트'
     this.max_content_id = 3;
     this.state = {  
       subject:{title:"WEB" , sub:"world wide web!"}, 
-      mode:'read', 
+      mode:'welcome', 
       selected_content_id:2, 
       welcome:{ title:'Welcome', desc:"Hello, React!!"}, 
       contents:[
@@ -41,7 +41,7 @@ class App extends Component { //'App컴포넌트'
       var i = 0;
       while(i < this.state.contents.length) {
         var data = this.state.contents[i]; //*contents[i]->선택될지 모르는 컨텐츠들(HTML,CSS,JS목록에서) 중 하나
-        if(data.id === this.state.selected_content_id) { //*선택된 콘텐츠 가려내기
+        if(data.id === this.state.selected_content_id) { //*selected_content_id를 이용해, 선택된 콘텐츠 찾아내기
           _title = data.title;
           _desc = data.desc;
           break; 
@@ -64,8 +64,8 @@ class App extends Component { //'App컴포넌트'
       var i = 0;
       while(i < this.state.contents.length) {
         var data = this.state.contents[i];
-        if(data.id === this.state.selected_content_id) {
-          _data = data; //*_data는 선택된 콘텐츠
+        if(data.id === this.state.selected_content_id) { //*selected_content_id를 이용해, 선택된 콘텐츠 찾아내기
+          _data = data; //_data는 선택된 콘텐츠
         }
         i = i+1;
       } //*selected_content_id를 이용해, 선택된 콘텐츠(HTML,CSS,JS목록에서)를 찾는다(read모드에서 했던 작업!)
@@ -81,7 +81,7 @@ class App extends Component { //'App컴포넌트'
             }
             i=i+1
           }
-          this.setState({contents:_contents, mode:read}); //*setState이용해 'state 변경'
+          this.setState({contents:_contents, mode:'read'}); //*setState이용해 'state 변경'
       }.bind(this)}></UpdateContent> //_article변수에 UpdateContent를
     }
 
@@ -99,7 +99,23 @@ class App extends Component { //'App컴포넌트'
             this.setState({mode:'read', selected_content_id:Number(id)}); {/*mode를 read로, selected_content_id를 전달받은 id값으로 'state 변경'*/}
           }.bind(this)}></TOC>
         <Control onChangeMode={function(_mode) { {/*인자로 mode이름을 전달받음*/}
-          this.setState({mode:_mode}); {/*mode를 인자로 전달받은 mode이름으로 'state 변경'*/}
+          if(_mode === 'delete') { //<delete모드일 때>
+            if(window.confirm('really?')) { //window.confirm()->확인 누르면 true를 return, 취소 누르면 false를 return (정말 삭제할 것인지 물어봄)
+              var _contents = Array.from(this.state.contents); //this.state.contents를 '복사'한 후, _contents변수에 저장
+              var i = 0;
+              while(i<_contents.length) {
+                if(_contents[i].id === this.state.selected_content_id) { //*selected_content_id를 이용해, 선택된(삭제할) 콘텐츠 찾아내기
+                  _contents.splice(i,1); //splice()로 선택된 콘텐츠 삭제
+                  break;
+                }
+                i=i+1;
+              }
+              this.setState({contents:_contents, mode:'welcome'}); //*setState이용해 'state 변경'
+            }
+
+          } else {
+            this.setState({mode:_mode}); {/*mode를 인자로 전달받은 mode이름으로 'state 변경'*/} {/*원래 있던 것'*/}
+          }  
         }.bind(this)}></Control>
 
         {_article} {/*원래는 <ReadContent title={_title} desc={_desc}></ReadContent>*/} {/*주의*/}
@@ -149,12 +165,19 @@ concat()이외에 원본의 불변성을 유지하는 방법
 3.'immutable.js' 사용(모든 명령어가 불변함)
 */
 
-//여기부터
-//Update->Read+Create
+//*Update->Read(선택된 콘텐츠를 찾는다)+Create(폼에서 입력한다)
 /*
-## HTML,CSS,JS목록에서(TOC컴포넌트에서) update할 콘텐츠를 하나 선택한다(누른다)-> 'onClick이벤트'가 발생해서 App컴포넌트에 있는 TOC컴포넌트의 'onChangePage이벤트'의 funtion이 호출됨-> *mode를 read로, 'selected_content_id'를 전달받은 id값으로 바꾸는 'state값 변경'이 일어남->render함수 호출돼서, 클릭한 목록에 해당되게 ReadContent컴포넌트의 내용이 바뀜(위의 내용과 같음)
+## HTML,CSS,JS목록에서(TOC컴포넌트에서) update할 콘텐츠를 하나 선택한다(누른다)-> 'onClick이벤트'가 발생해서 App컴포넌트에 있는 TOC컴포넌트의 'onChangePage이벤트'의 funtion이 호출됨-> mode를 read로, 'selected_content_id'를 전달받은 id값으로 바꾸는 'state값 변경'이 일어남->render함수 호출돼서, 클릭한 목록에 해당되게 ReadContent컴포넌트의 내용이 바뀜(위의 내용과 같음)
 VV-> Control컴포넌트에서 update를 클릭한다-> 'onClick이벤트'가 발생해서 App컴포넌트에 있는 Control컴포넌트의 'onChangeMode이벤트'의 function이 호출됨-> mode를, '인자'로 전달받은 mode이름인 update로 바꾸는 'state값 변경'이 일어남->render함수 호출됨
 ->App컴포넌트의 update모드에서 앞에서 선택된 콘텐츠를 찾아 UpdateContent컴포넌트의 data props로 전달한다-> 바뀐 update모드에서(UpdateContent컴포넌트에서), 폼으로 들어온 선택된 콘텐츠의 제목과 내용(this.props.data.title/desc)을 수정해서 제출버튼을 누른다-> 'onSubmit'이벤트가 발생해서 App컴포넌트에 있는 UpdateContent컴포넌트의 'onSubmit이벤트'의 function이 호출되고 인자로 '폼에서 수정된, 선택된 콘텐츠의 id,제목,내용'을 전달받음
 -> 기존의 콘텐츠를 수정된 콘텐츠로 / mode를 read로 'state 변경'-> render함수 호출됨-> TOC컴포넌트의 목록이 수정됨
 */
 //배열,객체를 '수정'하려고 할 때는, 일단 복사한 다음 복사본을 수정한다
+
+//여기부터
+/*
+## HTML,CSS,JS목록에서(TOC컴포넌트에서) delete할 콘텐츠를 하나 선택한다(누른다)(->'onClick이벤트'가 발생해서 App컴포넌트에 있는 TOC컴포넌트의 'onChangePage이벤트'의 funtion이 호출됨-> mode를 read로, 'selected_content_id'를 전달받은 id값으로 바꾸는 'state값 변경'이 일어남->render함수 호출돼서, 클릭한 목록에 해당되게 ReadContent컴포넌트의 내용이 바뀜)
+VV-> Control컴포넌트에서 delete버튼을 클릭한다-> 'onClick이벤트'가 발생해서 App컴포넌트에 있는 Control컴포넌트의 'onChangeMode이벤트'의 function이 호출되고 mode이름인 delete가 인자인 _mode로 전달됨 
+->App컴포넌트의 Control컴포넌트에서, 정말 삭제할거냐고 물어보는 confirm창이 뜨고 확인을 누른다->앞에서 선택된 콘텐츠를 찾아 splice()로 삭제한다->기존의 콘텐츠를 삭제된 콘텐츠를 제외한 / mode를 welcome로 'state 변경'-> render함수 호출됨-> TOC컴포넌트의 목록이 수정됨
+*/
+//**'selected_content_id'를 이용해, 선택된 콘텐츠 찾아내기
