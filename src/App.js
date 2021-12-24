@@ -5,6 +5,7 @@ import TOC from './components/TOC';
 import Control from './components/Control'; 
 import ReadContent from './components/ReadContent';
 import CreateContent from './components/CreateContent';
+import UpdateContent from './components/UpdateContent';
 import './App.css'; 
 
 class App extends Component { //'App컴포넌트'
@@ -26,29 +27,62 @@ class App extends Component { //'App컴포넌트'
   }
 
   render() {
-    var _title, _desc, _article = null; //*_article변수 추가 선언
+    var _title, _desc, _article = null; //_article변수 추가 선언
+
     if(this.state.mode === 'welcome') { //<mode가 welcome일 때>
+
       _title = this.state.welcome.title;
       _desc = this.state.welcome.desc;
-      _article = <ReadContent title={_title} desc={_desc}></ReadContent> //*_article변수에 ReadContent를
+
+      _article = <ReadContent title={_title} desc={_desc}></ReadContent> //_article변수에 ReadContent를
+
     } else if(this.state.mode === 'read') { //<mode가 read일 때>
+
       var i = 0;
       while(i < this.state.contents.length) {
-        var data = this.state.contents[i];
-        if(data.id === this.state.selected_content_id) {
+        var data = this.state.contents[i]; //*contents[i]->선택될지 모르는 컨텐츠들(HTML,CSS,JS목록에서) 중 하나
+        if(data.id === this.state.selected_content_id) { //*선택된 콘텐츠 가려내기
           _title = data.title;
           _desc = data.desc;
           break; 
         }
         i = i+1;
       } 
-      _article = <ReadContent title={_title} desc={_desc}></ReadContent> //*_article변수에 ReadContent를
+
+      _article = <ReadContent title={_title} desc={_desc}></ReadContent> //_article변수에 ReadContent를
+
     } else if(this.state.mode === 'create') { //<mode가 create일 때>
+
       _article = <CreateContent onSubmit={function(_title, _desc) { //*인자로 '<input>태그에 입력한 값과 <textarea>에 입력한 값'을 전달받음
           this.max_content_id = this.max_content_id + 1; //this.max_content_id값을 1 증가시킴
-          var _contents = this.state.contents.concat( {id:this.max_content_id, title:_title, desc:_desc} ); //*concat()을 이용해, App컴포넌트의 state.contents의 원본을 복사한 복사본의 끝에 '입력한 값들'과 id를 추가
-          this.setState({contents:_contents}); //*contents를, 입력한 값이 추가된 _contents로 'state 변경'!
-      }.bind(this)}></CreateContent> //*mode가 create일 때, _article변수에 ReadContent 말고 CreateContent를
+          var _contents = this.state.contents.concat( {id:this.max_content_id, title:_title, desc:_desc} ); //concat()을 이용해, App컴포넌트의 state.contents의 원본을 복사한 복사본의 끝에 '입력한 값들'과 id를 추가
+          this.setState({contents:_contents, mode:'read', selected_content_id:this.max_content_id}); //contents를, 입력한 값이 추가된 _contents로 'state 변경'!
+      }.bind(this)}></CreateContent> //mode가 create일 때, _article변수에 ReadContent 말고 CreateContent를
+
+    } else if(this.state.mode === 'update') { //<mode가 update일 때>
+
+      var i = 0;
+      while(i < this.state.contents.length) {
+        var data = this.state.contents[i];
+        if(data.id === this.state.selected_content_id) {
+          _data = data; //*_data는 선택된 콘텐츠
+        }
+        i = i+1;
+      } //*selected_content_id를 이용해, 선택된 콘텐츠(HTML,CSS,JS목록에서)를 찾는다(read모드에서 했던 작업!)
+
+      _article = <UpdateContent data={_data} onSubmit={ //*선택된 콘텐츠(_data)를 data props로 주입!
+        function(_id,_title, _desc) { //*인자로 '폼에서 수정된, 선택된 콘텐츠의 id,제목,내용'을 전달받음 
+          var _contents = Array.from(this.state.contents); //*this.state.contents를 '복사'한 후, _contents변수에 저장
+          var i = 0;
+          while(i<_contents.length) {
+            if(_contents[i].id === _id) {
+              _contents[i] = {id:_id, title:_title, desc:_desc}; //_contents는 기존의 콘텐츠가 아닌 수정된 콘텐츠가 포함된 것
+              break;
+            }
+            i=i+1
+          }
+          this.setState({contents:_contents, mode:read}); //*setState이용해 'state 변경'
+      }.bind(this)}></UpdateContent> //_article변수에 UpdateContent를
     }
 
     return (
@@ -97,15 +131,14 @@ export default App;
 //*mode가 create일 때, _article변수에 ReadContent 말고 CreateContent를
 //*인자->값을 넘겨줌!
 
-//여기부터
 //*Create컴포넌트에서 <input>태그와 <textarea>태그에 '입력한 값들'을, App컴포넌트의 state.contents 끝에 추가하고 싶다
 /*
 ##Control컴포넌트에서 create를 클릭했을 때-> 'onClick이벤트'가 발생해서 App컴포넌트에 있는 Control컴포넌트의 'onChangeMode이벤트'의 function이 호출됨-> mode를, '인자'로 전달받은 mode이름인 create로 바꾸는 'state값 변경'이 일어남->render함수 호출됨
 VV->바뀐 create모드에서(CreateContent컴포넌트에서), <input>태그와 <textarea>태그에 값을 입력해서 제출하면 'onSubmit'이벤트가 발생해서 App컴포넌트에 있는 CreateContent컴포넌트의 'onSubmit이벤트'의 function이 호출되고 '인자'로 <input>태그와 <textarea>태그에 '입력한 값들'을 전달받음
--> concat()을 이용해, App컴포넌트의 state.contents의 원본을 복사한 복사본의 끝에 '입력한 값들'과 id가 추가됨-> *contents를, 입력한 값이 추가된 _contents로 'state 변경'
+-> concat()을 이용해, App컴포넌트의 state.contents의 원본을 복사한 복사본의 끝에 '입력한 값들'과 id가 추가됨-> *contents를, 입력한 값이 추가된 _contents로 / mode를 read로 /selected_content_id를 this.max_content_id로 'state 변경'
 -> render함수 호출됨(shouldComponentUpdate()를 이용해, TOC컴포넌트로 들어오는 props값이 바뀌면 render함수가 호출되고, 값이 안바뀌면 render함수가 호출되지 않도록)-> TOC컴포넌트의 목록에 추가됨
 */
-
+  
 //*push():원본을 변경 / concat():원본을 변경하지 않고, 원본의 '복사본'을 변경 ->state에 값을 추가할 때, push()말고 concat() 사용하기!(shouldComponentUpdate()때문)
 //**state에 있는 값을 바꿀 때는, 원본을 수정하지 말고 '복사본'을 수정하자!
 //shouldComponentUpdate():어떤 컴포넌트의 render함수가 실행되어야하는지 않아야하는지 결정해줌->render함수 이전에 실행됨, return값이 true면 render함수가 호출되고, false면 render함수가 호출되지 않는다, 두 개의 매개변수 newProps,newState
@@ -115,3 +148,13 @@ concat()이외에 원본의 불변성을 유지하는 방법
 2.객체의 경우->'Object.assign()'으로 원본을 복사
 3.'immutable.js' 사용(모든 명령어가 불변함)
 */
+
+//여기부터
+//Update->Read+Create
+/*
+## HTML,CSS,JS목록에서(TOC컴포넌트에서) update할 콘텐츠를 하나 선택한다(누른다)-> 'onClick이벤트'가 발생해서 App컴포넌트에 있는 TOC컴포넌트의 'onChangePage이벤트'의 funtion이 호출됨-> *mode를 read로, 'selected_content_id'를 전달받은 id값으로 바꾸는 'state값 변경'이 일어남->render함수 호출돼서, 클릭한 목록에 해당되게 ReadContent컴포넌트의 내용이 바뀜(위의 내용과 같음)
+VV-> Control컴포넌트에서 update를 클릭한다-> 'onClick이벤트'가 발생해서 App컴포넌트에 있는 Control컴포넌트의 'onChangeMode이벤트'의 function이 호출됨-> mode를, '인자'로 전달받은 mode이름인 update로 바꾸는 'state값 변경'이 일어남->render함수 호출됨
+->App컴포넌트의 update모드에서 앞에서 선택된 콘텐츠를 찾아 UpdateContent컴포넌트의 data props로 전달한다-> 바뀐 update모드에서(UpdateContent컴포넌트에서), 폼으로 들어온 선택된 콘텐츠의 제목과 내용(this.props.data.title/desc)을 수정해서 제출버튼을 누른다-> 'onSubmit'이벤트가 발생해서 App컴포넌트에 있는 UpdateContent컴포넌트의 'onSubmit이벤트'의 function이 호출되고 인자로 '폼에서 수정된, 선택된 콘텐츠의 id,제목,내용'을 전달받음
+-> 기존의 콘텐츠를 수정된 콘텐츠로 / mode를 read로 'state 변경'-> render함수 호출됨-> TOC컴포넌트의 목록이 수정됨
+*/
+//배열,객체를 '수정'하려고 할 때는, 일단 복사한 다음 복사본을 수정한다
